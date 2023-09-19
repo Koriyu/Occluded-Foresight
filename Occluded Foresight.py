@@ -1,5 +1,6 @@
 import random
 import math
+import os
 
 """------ some random math ------"""
 
@@ -34,20 +35,52 @@ character = Character('Character','♜',)
 entity_list = []
 class Entity:
 
-    def __init__(self,name,symbol,alternate_symbols=[None]):
+    def __init__(self,name,symbol,alternate):
         self.name = name
         self.symbol = symbol
-        self.alternate_symbols = alternate_symbols
+        self.alternate = alternate
         entity_list.append(self)
 
 
-pillar_entity = Entity('Pillar','▥',['▥','▥','▥'])
-treasure_entity = Entity('Treasure', '❉')
-portal_entity = Entity('Portal', '♨')
+pillar_entity = Entity('Pillar', '◦', '▥')
+treasure_entity = Entity('Treasure', '◦', '❉')
+portal_entity = Entity('Portal', '◦', '♨')
 
 # The lower the level the closer it is to the treasure
-l1td_entity = Entity('Level 1 Treasure Detector', 'x')
-l2td_entity = Entity('Level 2 Treasure Detector', 'X')
+l1td_entity = Entity('Level 1 Treasure Detector', '◦', 'x')
+l2td_entity = Entity('Level 2 Treasure Detector', '◦', 'X')
+
+# The lower the level the closer it is to the portal
+l1pd_entity = Entity('Level 1 Portal Detector', '◦', '.')
+l2pd_entity = Entity('Level 2 Portal Detector', '◦', 'o')
+l3pd_entity = Entity('Level 3 Portal Detector', '◦', '0')
+
+'''pillar_entity = Entity('Pillar', '▥', '▥')
+treasure_entity = Entity('Treasure', '❉', '❉')
+portal_entity = Entity('Portal', '♨', '♨')
+
+# The lower the level the closer it is to the treasure
+l1td_entity = Entity('Level 1 Treasure Detector', 'x', 'x')
+l2td_entity = Entity('Level 2 Treasure Detector', 'X', 'X')
+
+# The lower the level the closer it is to the portal
+l1pd_entity = Entity('Level 1 Portal Detector', '.', '.')
+l2pd_entity = Entity('Level 2 Portal Detector', 'o', 'o')
+l3pd_entity = Entity('Level 3 Portal Detector', '0', '0')
+'''
+#-----------------------------------
+'''pillar_entity = Entity('Pillar', '◦', '▥')
+treasure_entity = Entity('Treasure', '◦', '❉')
+portal_entity = Entity('Portal', '◦', '♨')
+
+# The lower the level the closer it is to the treasure
+l1td_entity = Entity('Level 1 Treasure Detector', '◦', 'x')
+l2td_entity = Entity('Level 2 Treasure Detector', '◦', 'X')
+
+# The lower the level the closer it is to the portal
+l1pd_entity = Entity('Level 1 Portal Detector', '◦', '.')
+l2pd_entity = Entity('Level 2 Portal Detector', '◦', 'o')
+l3pd_entity = Entity('Level 3 Portal Detector', '◦', '0')'''
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
@@ -174,7 +207,23 @@ def addtreasuredetectors(gridlist,lengthy,treasurecoords):
     
     return treasuredetectorcoords
 
-def treasurize(gridlist,lengthy,tcl,tdl,pcl,portl):
+def addportaldetectors(gridlist,lengthy,portalcoords):
+    air_list = call_all_air(gridlist,lengthy)
+    portal_list = portalcoords
+    portaldetectorcoords = [[],[],[]]
+
+    for portal in portal_list:
+        for coordinate in air_list:
+            if math.sqrt(sqr(portal[0]-coordinate[0]) + sqr(portal[1]-coordinate[1])) <= 2 and coordinate not in portal_list:
+                portaldetectorcoords[0].append(coordinate)
+            elif math.sqrt(sqr(portal[0]-coordinate[0]) + sqr(portal[1]-coordinate[1])) <= 5 and coordinate not in portal_list:
+                portaldetectorcoords[1].append(coordinate)
+            elif math.sqrt(sqr(portal[0]-coordinate[0]) + sqr(portal[1]-coordinate[1])) <= 9 and coordinate not in portal_list:
+                portaldetectorcoords[2].append(coordinate)
+    
+    return portaldetectorcoords
+
+def treasurize(gridlist,lengthy,tcl,tdl,pcl,portl,portdl):
 
     generatedgridlist = gridlist
     for i in tcl:
@@ -188,6 +237,12 @@ def treasurize(gridlist,lengthy,tcl,tdl,pcl,portl):
     if portl != None:
         for i in portl:
             generatedgridlist[i[1]][i[0]] = portal_entity
+        for i in portdl[2]:
+            generatedgridlist[i[1]][i[0]] = l3pd_entity
+        for i in portdl[1]:
+            generatedgridlist[i[1]][i[0]] = l2pd_entity
+        for i in portdl[0]:
+            generatedgridlist[i[1]][i[0]] = l1pd_entity
     return generatedgridlist
 
 """-----------------------------------------------------------------------------------------"""
@@ -237,28 +292,19 @@ def generate_gridwithcharacter(x,y,generated_grid_list):
                 gridx += generated_grid_list[ind_list][ind_i]
         print(gridx)
 
-"""-----------------------------------------------------------------------------------------"""
-"""-----------------------------------------------------------------------------------------"""
+def generate_gridwithalternate(x,y,generated_grid_list):
+    character_coordinates = [x,y]
 
-# CRYPT HEALTH SYSTEM AND GAME OVER
-
-"""-----------------------------------------------------------------------------------------"""
-"""-----------------------------------------------------------------------------------------"""
-
-crypt_health = 1000
-
-def crumblecrypt(health):
-    if health == 0:
-        return True
-
-def game_over(bool):
-
-    gameoverbool = False
-    for i in bool:
-        if i == True:
-            gameoverbool = True
-    return gameoverbool
-        
+    for ind_list in range(len(generated_grid_list)): # -- Represent entire line
+        gridx = ''
+        for ind_i in range(len(generated_grid_list[ind_list])): # -- Represent character of each line
+            if [ind_i,ind_list] == character_coordinates: # -- Character position determinant
+                gridx += character.symbol
+            elif type(generated_grid_list[ind_list][ind_i]) == Entity:
+                gridx += generated_grid_list[ind_list][ind_i].alternate
+            else:
+                gridx += generated_grid_list[ind_list][ind_i]
+        print(gridx)
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
@@ -306,13 +352,13 @@ def initgl():
 
     message_line = ''
 
-    treasurecoordslist = randomselect_aircoords(generated_grid_list,lengthy,5)
+    treasurecoordslist = randomselect_aircoords(generated_grid_list,lengthy,numoftreasure)
     treasuredetectorslist = addtreasuredetectors(generated_grid_list,lengthy,treasurecoordslist)
-    pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+    pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
 
     if similaritems(treasurecoordslist,pillarcoordslist):
         while similaritems(treasurecoordslist,pillarcoordslist):
-            pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+            pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
     
     portal_coord = randomselect_aircoords(generated_grid_list,lengthy,1)
     canportalize = False
@@ -320,13 +366,20 @@ def initgl():
     
     if similaritems(portal_coord,pillarcoordslist):
         while similaritems(portal_coord,pillarcoordslist):
-                pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+                pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
+                if similaritems(portal_coord,pillarcoordslist):
+                    while similaritems(portal_coord,pillarcoordslist):
+                        pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
 
     
 
 
+    winbool = False
+    gameoverbool = False
 
-    while (([character_coordinates[0],character_coordinates[1]] != portal_coord[0]) and (current_treasure != numoftreasure)): # -- Replace the condition of while to something (either the game ends with a win or a game over)
+    while True:
+        os.system('clear')
+        os.system('cls')
 
         temp_grid_list = generate_gridlist(55,15)
 
@@ -335,11 +388,12 @@ def initgl():
         tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
         pcl = pillarcoordslist
         portl = portal_coord
+        portdl = addportaldetectors(temp_grid_list,lengthy,portal_coord)
 
         if canportalize:
-            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl)
+            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl,portdl)
         else:
-            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None)
+            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None,None)
         
 
         for i in range(50):
@@ -352,7 +406,8 @@ def initgl():
 
         print('Crypt health: [{x}/{y}]              ❉ Treasure: [{a}/{b}]'.format(x=crypt_health,y=init_crypt_health,a=current_treasure,b=numoftreasure))
 
-        char_movement = input('[w/a/s/d]')
+        char_movement = input('''[w/a/s/d]
+> ''')
         if char_movement not in ['w','a','s','d','W','A','S','D']:
             continue
 
@@ -360,24 +415,53 @@ def initgl():
 
         # -- Place the conditions for interacting with different objects here
         
-        if isinsideWall(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list): 
+        if crypt_health <= 0:
+            gameoverbool = True
+            
+            temp_grid_list = generate_gridlist(55,15)
+
+
+            tcl = treasurecoordslist
+            tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
+            pcl = pillarcoordslist
+            portl = portal_coord
+            portdl = addportaldetectors(temp_grid_list,lengthy,portal_coord)
+
+            if canportalize:
+                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl,portdl)
+            else:
+                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None,None)
+        
+
+            for i in range(50):
+                print('')
+
+            generate_gridwithalternate(character_coordinates[0],character_coordinates[1],temp_grid_list)
+
+            break
+    
+        elif isinsideWall(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list): 
             # -- For if the character bumps into a wall
             message_line += 'You bumped into a wall. The crypt quivers. (-2 Crypt Health)\n'
             crypt_health -= 2
-            print(crypt_health)
+            if canportalize:
+                message_line += 'Dust and debris begin to fall... (-2 Crypt Health)\n'
+                crypt_health -= 2
             continue
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,pillar_entity):
-            message_line += 'You bumped into a pillar. The ceiling cracks. (-5 Crypt Health)\n'
-            crypt_health -= 5
-            print(crypt_health)
+            message_line += 'You bumped into a pillar. The ceiling cracks. (-10 Crypt Health)\n'
+            crypt_health -= 10
+            if canportalize:
+                message_line += 'Dust and debris begin to fall... (-10 Crypt Health)\n'
+                crypt_health -= 10
             continue
 
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l2td_entity):
-            message_line += 'You sense a treasure nearby...\n'
+            message_line += 'You sense a treasure nearby... [Intuition 1/2]\n'
             character_coordinates = new_character_coordinates
 
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l1td_entity):
-            message_line += 'You feel the treasure\'s presence growing stronger...\n'
+            message_line += 'You feel the treasure\'s presence growing stronger... [Intuition 2/2]\n'
             character_coordinates = new_character_coordinates
 
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,treasure_entity):
@@ -389,34 +473,392 @@ def initgl():
                 message_line += 'You have found all 5 treasures! As a result, a portal has opened, but the crypt\n'
                 message_line += 'is now decaying rapidly. Find the portal as soon as possible to save yourself.\n'
                 canportalize = True
-                print(canportalize)
+
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l3pd_entity):
+            message_line += 'You feel a slight tingle in your intuition. Intuition [1/3]\n'
+            character_coordinates = new_character_coordinates
+        
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l2pd_entity):
+            message_line += 'You sense a portal nearby... Intuition [2/3]\n'
+            character_coordinates = new_character_coordinates
+
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l1pd_entity):
+            message_line += 'You feel the portal\'s presence growing stronger... Intuition [3/3]\n'
+            character_coordinates = new_character_coordinates
+        
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,portal_entity):
+            winbool = True
+            
+            temp_grid_list = generate_gridlist(55,15)
+
+
+            tcl = treasurecoordslist
+            tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
+            pcl = pillarcoordslist
+            portl = portal_coord
+            portdl = addportaldetectors(temp_grid_list,lengthy,portal_coord)
+
+            if canportalize:
+                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl,portdl)
+            else:
+                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None,None)
+        
+
+            for i in range(50):
+                print('')
+
+            generate_gridwithalternate(character_coordinates[0],character_coordinates[1],temp_grid_list)
+
+            break
+
         else:
             character_coordinates = new_character_coordinates
+        
+        
+
         crypt_health -= 1
+        if canportalize:
+            crypt_health -= 1
+    
 
-initgl()
-'''generated_grid_list = generate_gridlist(55,15)
-portal_coord = randomselect_aircoords(generated_grid_list,15,1)
-print(portal_coord)'''
-"""lengthx = 55
+    return [winbool,gameoverbool]
 
-lengthy = 15
+"""-----------------------------------------------------------------------------------------"""
+"""-----------------------------------------------------------------------------------------"""
 
-generated_grid_list = generate_gridlist(55,15)
+# MAIN MENU AND DIALOGS
 
-character_coordinates = [int(lengthx/2)+1,lengthy+4]
+"""-----------------------------------------------------------------------------------------"""
+"""-----------------------------------------------------------------------------------------"""
 
-init_crypt_health = 1000
-crypt_health = 1000
+dialog_list = []
+class Dialog:
 
-numoftreasure = 5
-current_treasure = 0
+    def __init__(self,id,dialog,input,inputid):
+        self.id = id
+        self.dialog = dialog
+        self.input = input
+        self.inputid = inputid
+        dialog_list.append(self)
+    
+    def determine_input(self):
 
-message_line = ''
+        response = input(self.dialog)
 
-treasurecoordslist = randomselect_aircoords(generated_grid_list,lengthy,5)
-treasuredetectorslist = addtreasuredetectors(generated_grid_list,lengthy,treasurecoordslist)
-pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+        while response not in self.input:
+            input_list_str = '' 
+            for i in self.input:
+                input_list_str += '['+i+']'+'\n'
+            response = input('Unknown response. Please choose one of the options: \n'+input_list_str)
+        
+        for i in range(len(self.input)):
+            if response == self.input[i]:
+                return self.inputid[i]
+        
 
-for i in pillarcoordslist:
-    print(i)"""
+
+d1 = Dialog(1, '''
+
+    _______  _______  _______  _                 ______   _______  ______                             
+    (  ___  )(  ____ \(  ____ \( \      |\     /|(  __  \ (  ____ \(  __  \                            
+    | (   ) || (    \/| (    \/| (      | )   ( || (  \  )| (    \/| (  \  )                           
+    | |   | || |      | |      | |      | |   | || |   ) || (__    | |   ) |                           
+    | |   | || |      | |      | |      | |   | || |   | ||  __)   | |   | |                           
+    | |   | || |      | |      | |      | |   | || |   ) || (      | |   ) |                           
+    | (___) || (____/\| (____/\| (____/\| (___) || (__/  )| (____/\| (__/  )                           
+    (_______)(_______/(_______/(_______/(_______)(______/ (_______/(______/                            
+                                                                                                    
+                    _______  _______  _______  _______  _______ _________ _______          _________
+                    (  ____ \(  ___  )(  ____ )(  ____ \(  ____ \\__   __/(  ____ \|\     /|\__   __/
+                    | (    \/| (   ) || (    )|| (    \/| (    \/   ) (   | (    \/| )   ( |   ) (   
+                    | (__    | |   | || (____)|| (__    | (_____    | |   | |      | (___) |   | |   
+                    |  __)   | |   | ||     __)|  __)   (_____  )   | |   | | ____ |  ___  |   | |   
+                    | (      | |   | || (\ (   | (            ) |   | |   | | \_  )| (   ) |   | |   
+                    | )      | (___) || ) \ \__| (____/\/\____) |___) (___| (___) || )   ( |   | |   
+                    |/       (_______)|/   \__/(_______/\_______)\_______/(_______)|/     \|   )_(   
+
+    by Koriyu
+
+[Play]
+[How to Play] 
+[Exit]            
+
+> ''', ['Play','How to Play','Exit'], [2,3,4])
+
+d2000 = Dialog(2000,'[Yes] [Back to Main Menu]', ['Yes','Back to Main Menu'], [2,1])
+
+d3 = Dialog(3,'''
+
+    [1/6]
+
+
+    WELCOME TO OCCLUDED FORESIGHT!
+
+    Occluded Foresight is a terminal-based adventure game in which you
+    navigate through a dark and crumbling crypt where hidden treasures
+    and unforeseeable dangers lie within. You must collect all of the
+    treasures before the crypt collapses.
+    
+    This game was created as my 'Python Terminal Game' portfolio
+    project from Codecademy. Also made with love and passion :3
+
+    Hope you enjoy!
+
+            
+    1/6 [Next]
+
+    [Main Menu]
+
+> ''', ['Next', 'Main Menu'], [5,1])
+
+d4 = Dialog(4,'''
+
+Do you want to exit the game?
+
+[Yes]
+[No]
+
+> ''', ['Yes','No'], [0,1])
+
+d5 = Dialog(5,'''
+
+    [2/6]
+
+            
+    YOUR HERO AGAINST THE CRYPT
+            
+    Starting the game, you will notice a grid made up of a large 15 by
+    15 space and a little chamber underneath.
+    
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦♜◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    
+    This entire grid is known as the crypt. Inside the 15 by 15 grid
+    space lies 5 treasures and multiple obstructions scattered across.
+
+    Your character is depicted as a chess rook piece (♜) located at
+    the bottom center of the grid. Your character is movable through
+    WASD movement (W for up, A for left, S for down, and D for right,
+    not case-sensitive). Just make sure to press the [Enter] key 
+    for every move though.
+
+            
+    [Previous] 2/6 [Next]
+
+    [Main Menu]
+
+> ''', ['Previous', 'Next', 'Main Menu'], [3,6,1])
+
+d6 = Dialog(6,'''
+
+    [3/6]
+            
+
+    CRYPT HEALTH
+            
+    Located at the left-hand side below the grid itself is a stat
+    called [Crypt Health]. This refers to the integrity of the weak
+    crypt. You start with 1000 [Crypt Health]. Once the [Crypt 
+    Health] becomes 0, the entire crypt will fall, resulting in your
+    demise.
+    
+    There are several factors that reduce [Crypt Health]:
+        - Your steps
+            Every step or movement your character makes reduces
+            the [Crypt Health] by 1 point.
+        - Bumping into a Wall (■)
+            Walls are objects that surround the grid to prevent
+            the character from going out. Bumping into a Wall 
+            reduces the [Crypt Health] by 2 points.
+        - Bumping into a Pillar (▥): 
+            Ah yes, the main antagonists of the game: Pillars.
+            Pillars are numerously scattered across the crypt.
+            Since the pillars are the only source of integrity
+            for this crypt, bumping into a Pillar reduces the
+            [Crypt Health] by 10 points.
+
+            
+    [Previous] 3/6 [Next]
+
+    [Main Menu]
+
+> ''', ['Previous', 'Next', 'Main Menu'], [5,7,1])
+
+d7 = Dialog(7,'''
+
+    [4/6]
+    
+    
+    TREASURES AND PORTALS
+    
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦❉◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦▥◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦▥◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦♜◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    
+    As stated previously, collecting treasures is the main goal of
+    the game. There are 5 treasures inside the crypt, and once all
+    of the treasures are found, a portal to the exit will open.
+    However, traversing through the crypt will be harder now.
+    Each reduction to the crypt health will then be multiplied by
+    two. This means that once you have collected all treasures, each 
+    step you take costs the crypt health 2 points, and each pillar
+    you bump into costs 20 points. In general, it's gonna be tough.
+    
+    But how will we find treasures and portals, you may ask? Well,
+    let's move on to the next page.
+    
+            
+    [Previous] 4/6 [Next]
+
+    [Main Menu]
+
+> ''', ['Previous', 'Next', 'Main Menu'], [6,8,1])
+
+d8 = Dialog(8,'''
+
+    [5/6]
+    
+    
+    THE INTUITION SYSTEM
+    
+    The [Intuition System] is another core part of the game. It allows
+    you to be able to locate nearby treasure and portals. Intuition is
+    depicted in number fractions. The greater the intuition, the nearer
+    you are to said treasure/portal.
+            
+    Here are some examples of intuition messages:
+    
+    ''You sense a treasure nearby... [Intuition 1/2]''
+    ''You feel the portal\'s presence growing stronger... Intuition [3/3]''
+    
+    Intuition messages pop up below the entirety of the grid:
+    
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦❉◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦❉◦♜◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦▥◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦❉◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦▥◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    You feel the treasure\'s presence growing stronger... Intuition [2/2] <-- Over here
+    
+    Oddly enough, your character doesn't have the intuition to detect
+    nearby pillars D:
+
+            
+    [Previous] 5/6 [Next]
+
+    [Main Menu]
+
+> ''', ['Previous', 'Next', 'Main Menu'], [7,9,1])
+
+d9 = Dialog(9,'''
+
+    [6/6]
+    
+            
+    With that, you now know the basics of playing the game! You are
+    now ready for the threats that lie ahead.
+    
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦0000ooo..♨♜.ooo0000▥◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦0000ooo...ooo0000◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦0000oooo.oooo0000◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■▥◦◦◦◦◦◦◦◦▥◦◦◦◦0000ooooooooo0000◦◦◦◦◦◦◦◦◦◦◦▥◦▥◦◦◦◦◦▥◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦00000ooooooo00000◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦0000000o0000000◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦0000000000000◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦00000000000◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦000000000◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦▥◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦0◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦▥◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦▥◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■◦◦◦◦◦■■■■■■■■■■■■■■■■■■■■■■■■■■
+    ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+
+            
+    [Previous] 6/6
+
+    [Main Menu]
+
+> ''', ['Previous', 'Main Menu'], [8,1])
+
+
+dialogvalue = 1
+while dialogvalue != 0:
+    
+    for i in dialog_list:
+        if dialogvalue == i.id:
+            dialogvalue = i.determine_input()
+            os.system('clear')
+            os.system('cls')
+        elif dialogvalue == 2:
+            gat = initgl()
+            if gat[0]:
+                print('You win! Try again?')
+            elif gat[1]:
+                print('You lost. Try again?')
+            dialogvalue = d2000.determine_input()
+
+        
