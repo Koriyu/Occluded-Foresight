@@ -6,6 +6,13 @@ import math
 def sqr(n):
     return n * n
 
+def similaritems(l1,l2):
+    truthvalue = False
+    for i in l1:
+        for j in l2:
+            if i == j:
+                truthvalue = True
+    return truthvalue
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
@@ -23,14 +30,16 @@ class Character:
 character = Character('Character','♜',)
 
 
-#-- ENTITIES -- (Rename to interactives later)
-
+#-- ENTITIES -- (Rename to WallisinsideWalls later)
+entity_list = []
 class Entity:
 
     def __init__(self,name,symbol,alternate_symbols=[None]):
         self.name = name
         self.symbol = symbol
         self.alternate_symbols = alternate_symbols
+        entity_list.append(self)
+
 
 pillar_entity = Entity('Pillar','▥',['▥','▥','▥'])
 treasure_entity = Entity('Treasure', '❉')
@@ -39,8 +48,6 @@ portal_entity = Entity('Portal', '♨')
 # The lower the level the closer it is to the treasure
 l1td_entity = Entity('Level 1 Treasure Detector', 'x')
 l2td_entity = Entity('Level 2 Treasure Detector', 'X')
-
-
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
@@ -54,7 +61,6 @@ l2td_entity = Entity('Level 2 Treasure Detector', 'X')
     # generate_gridlist: takes the length and width (xx and yy respectively) of the grid to create a grid list.
 
 def generate_gridlist(xx,yy):
-
     
     lengthx = xx
     lengthy = yy
@@ -128,21 +134,19 @@ def generate_gridlist(xx,yy):
         # call_all_air()
 
 
-# Treasure Generation:
+# Treasure and Pillar Generation:
 
-burger = generate_gridlist(55,15)
-
-def call_all_air(burger,lengthy):
+def call_all_air(gridlist,lengthy):
     air_coords = []
-    for i_list in range(len(burger)):
-        for i_i_list in range(len(burger[i_list])):
-            if burger[i_list][i_i_list] == '◦' and i_list <= lengthy:
-                air_coords.append([i_list,i_i_list])
+    for i_list in range(len(gridlist)):
+        for i_i_list in range(len(gridlist[i_list])):
+            if gridlist[i_list][i_i_list] == '◦' and i_list <= lengthy:
+                air_coords.append([i_i_list,i_list])
     return air_coords
 
-def randomselect_aircoords(burger,lengthy,n):
+def randomselect_aircoords(gridlist,lengthy,n):
 
-    air_coords = call_all_air(burger,lengthy)
+    air_coords = call_all_air(gridlist,lengthy)
     random_aircoords = []
     while len(random_aircoords) < n:
         selected_coord = random.choice(air_coords)
@@ -156,8 +160,8 @@ def randomselect_aircoords(burger,lengthy,n):
             random_aircoords.append(selected_coord)
     return random_aircoords
 
-def addtreasuredetectors(burger,lengthy,treasurecoords):
-    air_list = call_all_air(burger,lengthy)
+def addtreasuredetectors(gridlist,lengthy,treasurecoords):
+    air_list = call_all_air(gridlist,lengthy)
     treasure_list = treasurecoords
     treasuredetectorcoords = [[],[]]
 
@@ -170,27 +174,21 @@ def addtreasuredetectors(burger,lengthy,treasurecoords):
     
     return treasuredetectorcoords
 
-def treasurize(burger,lengthy):
-    treasurecoordslist = randomselect_aircoords(burger,lengthy,5)
-    treasuredetectorslist = addtreasuredetectors(burger,lengthy,treasurecoordslist)
-    pillarcoordslist = randomselect_aircoords(burger,lengthy,int(len(call_all_air(burger,lengthy))/50))
+def treasurize(gridlist,lengthy,tcl,tdl,pcl,portl):
 
-    if all(item in pillarcoordslist for item in treasurecoordslist):
-        while not all(item in pillarcoordslist for item in treasurecoordslist):
-            pillarcoordslist = randomselect_aircoords(burger,lengthy,int(len(call_all_air(burger))/50))
-
-    generatedgridlist = burger
-    for i in treasurecoordslist:
-        generatedgridlist[i[0]][i[1]] = treasure_entity
-    for i in treasuredetectorslist[0]:
-        generatedgridlist[i[0]][i[1]] = l1td_entity
-    for i in treasuredetectorslist[1]:
-        generatedgridlist[i[0]][i[1]] = l2td_entity
-    for i in pillarcoordslist:
-        generatedgridlist[i[0]][i[1]] = pillar_entity
+    generatedgridlist = gridlist
+    for i in tcl:
+        generatedgridlist[i[1]][i[0]] = treasure_entity
+    for i in tdl[1]:
+        generatedgridlist[i[1]][i[0]] = l2td_entity
+    for i in tdl[0]:
+        generatedgridlist[i[1]][i[0]] = l1td_entity
+    for i in pcl:
+        generatedgridlist[i[1]][i[0]] = pillar_entity
+    if portl != None:
+        for i in portl:
+            generatedgridlist[i[1]][i[0]] = portal_entity
     return generatedgridlist
-
-newburger = treasurize(burger,15)
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
@@ -242,36 +240,43 @@ def generate_gridwithcharacter(x,y,generated_grid_list):
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
-# OBSTACLES AND TREASURE: INTERACTIONS WITH PLAYER
+# CRYPT HEALTH SYSTEM AND GAME OVER
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
+crypt_health = 1000
 
+def crumblecrypt(health):
+    if health == 0:
+        return True
 
+def game_over(bool):
 
-
-
-
-
-
-
+    gameoverbool = False
+    for i in bool:
+        if i == True:
+            gameoverbool = True
+    return gameoverbool
+        
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
-# CRYPT HEALTH SYSTEM
+# OBSTACLES AND TREASURE: INTERACTIONS WITH PLAYER AND ENVIRONMENT
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
-
-
-
-
-
-
-
+def isinsideInteractive(x,y,generated_grid_list,Interactive): # Checks 
+    character_coordinates = [x,y]
+    
+    insideInteractiveBool = False
+    for ind_list in range(len(generated_grid_list)): # -- Iterate through the list of lists
+        for ind_i in range(len(generated_grid_list[ind_list])): # -- Iterate through the characters of each list
+            if generated_grid_list[ind_list][ind_i] == Interactive and [ind_i,ind_list] == character_coordinates: # -- Character position determinant
+                insideInteractiveBool = True
+    return insideInteractiveBool
 
 
 """-----------------------------------------------------------------------------------------"""
@@ -283,30 +288,70 @@ def generate_gridwithcharacter(x,y,generated_grid_list):
 """-----------------------------------------------------------------------------------------"""
 
 # FUNCTIONS:
-    # initialize_gridlooping(charactercoordinates): responsible for character presence and movement control; takes character coordinates [x,y] and starts the grid loop, only ending once a condition has been met.
+    # initgl(): responsible for character presence and movement control; takes character coordinates [x,y] and starts the grid loop, only ending once a condition has been met.
 
-def initialize_gridlooping(lenx,leny,ggl):
-    lengthx = lenx
-    lengthy = leny
+def initgl():
+    lengthx = 55
+    lengthy = 15
 
-    generated_grid_list = ggl
+    generated_grid_list = generate_gridlist(55,15)
 
     character_coordinates = [int(lengthx/2)+1,lengthy+4]
 
-    generate_gridwithcharacter(character_coordinates[0],character_coordinates[1],generated_grid_list)
+    init_crypt_health = 1000
+    crypt_health = 1000
+
+    numoftreasure = 5
+    current_treasure = 0
+
     message_line = ''
 
-    while character_coordinates != [1,1]: # -- Replace the condition of while to something (either the game ends with a win or a game over)
+    treasurecoordslist = randomselect_aircoords(generated_grid_list,lengthy,5)
+    treasuredetectorslist = addtreasuredetectors(generated_grid_list,lengthy,treasurecoordslist)
+    pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+
+    if similaritems(treasurecoordslist,pillarcoordslist):
+        while similaritems(treasurecoordslist,pillarcoordslist):
+            pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+    
+    portal_coord = randomselect_aircoords(generated_grid_list,lengthy,1)
+    canportalize = False
+
+    
+    if similaritems(portal_coord,pillarcoordslist):
+        while similaritems(portal_coord,pillarcoordslist):
+                pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+
+    
+
+
+
+    while (([character_coordinates[0],character_coordinates[1]] != portal_coord[0]) and (current_treasure != numoftreasure)): # -- Replace the condition of while to something (either the game ends with a win or a game over)
+
+        temp_grid_list = generate_gridlist(55,15)
+
+
+        tcl = treasurecoordslist
+        tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
+        pcl = pillarcoordslist
+        portl = portal_coord
+
+        if canportalize:
+            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl)
+        else:
+            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None)
+        
 
         for i in range(50):
             print('')
-            
-        generate_gridwithcharacter(character_coordinates[0],character_coordinates[1],generated_grid_list)
+
+        generate_gridwithcharacter(character_coordinates[0],character_coordinates[1],temp_grid_list)
 
         print(message_line)
         message_line = ''
 
-        print(character_coordinates)
+        print('Crypt health: [{x}/{y}]              ❉ Treasure: [{a}/{b}]'.format(x=crypt_health,y=init_crypt_health,a=current_treasure,b=numoftreasure))
+
         char_movement = input('[w/a/s/d]')
         if char_movement not in ['w','a','s','d','W','A','S','D']:
             continue
@@ -314,11 +359,64 @@ def initialize_gridlooping(lenx,leny,ggl):
         new_character_coordinates = change_charactercoords(character_coordinates[0],character_coordinates[1],char_movement)
 
         # -- Place the conditions for interacting with different objects here
-        if isinsideWall(new_character_coordinates[0],new_character_coordinates[1],generated_grid_list): # -- If the character bumps into a wall, it won't change the coordinates
-            message_line += 'You bumped into a wall.\n'
+        
+        if isinsideWall(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list): 
+            # -- For if the character bumps into a wall
+            message_line += 'You bumped into a wall. The crypt quivers. (-2 Crypt Health)\n'
+            crypt_health -= 2
+            print(crypt_health)
+            continue
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,pillar_entity):
+            message_line += 'You bumped into a pillar. The ceiling cracks. (-5 Crypt Health)\n'
+            crypt_health -= 5
+            print(crypt_health)
             continue
 
-        else:
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l2td_entity):
+            message_line += 'You sense a treasure nearby...\n'
             character_coordinates = new_character_coordinates
 
-initialize_gridlooping(55,15,newburger)
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l1td_entity):
+            message_line += 'You feel the treasure\'s presence growing stronger...\n'
+            character_coordinates = new_character_coordinates
+
+        elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,treasure_entity):
+            message_line += 'You found a treasure!\n'
+            treasurecoordslist.remove([new_character_coordinates[0],new_character_coordinates[1]])
+            character_coordinates = new_character_coordinates
+            current_treasure += 1
+            if current_treasure == numoftreasure:
+                message_line += 'You have found all 5 treasures! As a result, a portal has opened, but the crypt\n'
+                message_line += 'is now decaying rapidly. Find the portal as soon as possible to save yourself.\n'
+                canportalize = True
+                print(canportalize)
+        else:
+            character_coordinates = new_character_coordinates
+        crypt_health -= 1
+
+initgl()
+'''generated_grid_list = generate_gridlist(55,15)
+portal_coord = randomselect_aircoords(generated_grid_list,15,1)
+print(portal_coord)'''
+"""lengthx = 55
+
+lengthy = 15
+
+generated_grid_list = generate_gridlist(55,15)
+
+character_coordinates = [int(lengthx/2)+1,lengthy+4]
+
+init_crypt_health = 1000
+crypt_health = 1000
+
+numoftreasure = 5
+current_treasure = 0
+
+message_line = ''
+
+treasurecoordslist = randomselect_aircoords(generated_grid_list,lengthy,5)
+treasuredetectorslist = addtreasuredetectors(generated_grid_list,lengthy,treasurecoordslist)
+pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,int(len(call_all_air(generated_grid_list,lengthy))/50))
+
+for i in pillarcoordslist:
+    print(i)"""
