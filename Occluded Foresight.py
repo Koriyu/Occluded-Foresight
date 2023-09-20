@@ -2,7 +2,7 @@ import random
 import math
 import os
 
-"""------ some random math ------"""
+"""------ some random math and stuff ------"""
 
 def sqr(n):
     return n * n
@@ -14,6 +14,14 @@ def similaritems(l1,l2):
             if i == j:
                 truthvalue = True
     return truthvalue
+
+def clear():
+    if os.name != 'nt':
+        os.system('clear')
+    else:
+        os.system('cls')
+
+
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
@@ -21,6 +29,7 @@ def similaritems(l1,l2):
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
+
 #-- CHARACTER --
 class Character:
 
@@ -45,42 +54,13 @@ class Entity:
 pillar_entity = Entity('Pillar', '◦', '▥')
 treasure_entity = Entity('Treasure', '◦', '❉')
 portal_entity = Entity('Portal', '◦', '♨')
-
 # The lower the level the closer it is to the treasure
 l1td_entity = Entity('Level 1 Treasure Detector', '◦', 'x')
 l2td_entity = Entity('Level 2 Treasure Detector', '◦', 'X')
-
 # The lower the level the closer it is to the portal
 l1pd_entity = Entity('Level 1 Portal Detector', '◦', '.')
 l2pd_entity = Entity('Level 2 Portal Detector', '◦', 'o')
 l3pd_entity = Entity('Level 3 Portal Detector', '◦', '0')
-
-'''pillar_entity = Entity('Pillar', '▥', '▥')
-treasure_entity = Entity('Treasure', '❉', '❉')
-portal_entity = Entity('Portal', '♨', '♨')
-
-# The lower the level the closer it is to the treasure
-l1td_entity = Entity('Level 1 Treasure Detector', 'x', 'x')
-l2td_entity = Entity('Level 2 Treasure Detector', 'X', 'X')
-
-# The lower the level the closer it is to the portal
-l1pd_entity = Entity('Level 1 Portal Detector', '.', '.')
-l2pd_entity = Entity('Level 2 Portal Detector', 'o', 'o')
-l3pd_entity = Entity('Level 3 Portal Detector', '0', '0')
-'''
-#-----------------------------------
-'''pillar_entity = Entity('Pillar', '◦', '▥')
-treasure_entity = Entity('Treasure', '◦', '❉')
-portal_entity = Entity('Portal', '◦', '♨')
-
-# The lower the level the closer it is to the treasure
-l1td_entity = Entity('Level 1 Treasure Detector', '◦', 'x')
-l2td_entity = Entity('Level 2 Treasure Detector', '◦', 'X')
-
-# The lower the level the closer it is to the portal
-l1pd_entity = Entity('Level 1 Portal Detector', '◦', '.')
-l2pd_entity = Entity('Level 2 Portal Detector', '◦', 'o')
-l3pd_entity = Entity('Level 3 Portal Detector', '◦', '0')'''
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
@@ -100,18 +80,14 @@ def generate_gridlist(xx,yy):
 
     grid = []
 
-    # -- For up and down walls
     wally = []
     for i in range(lengthx + 2):
         wally.append('■')
 
-    grid.append(wally) # -- Upper wall appended as the first list in the list
+    grid.append(wally)
 
-    # -- The crypt itself
 
     for i in range(lengthy + 5): # print gridx if i is from 0 to lengthy-1, print start if i is from lengthy to lengthy + 2, print start 2 if i is from 
-
-        # -- -- Make each x axis layer
 
         if i < lengthy:
 
@@ -123,8 +99,6 @@ def generate_gridlist(xx,yy):
             gridx.append('■')
 
             grid.append(gridx)
-
-        # -- -- -- Starting area (closes once crypt is entered) (character zone only)
 
         elif i < lengthy + 2:
 
@@ -138,7 +112,6 @@ def generate_gridlist(xx,yy):
 
             grid.append(start)
 
-
         elif i < lengthy + 5:
 
             start2 = []
@@ -151,9 +124,16 @@ def generate_gridlist(xx,yy):
             
             grid.append(start2)
 
-    grid.append(wally) # -- -- Down wall
+    grid.append(wally)
 
     return grid
+
+class Grid:
+
+    def __init__(self,lengthx,lengthy):
+        self.lengthx = lengthx
+        self.lengthy = lengthy
+        self.gridlist = generate_gridlist(lengthx,lengthy)
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
@@ -164,22 +144,28 @@ def generate_gridlist(xx,yy):
 """-----------------------------------------------------------------------------------------"""
 # FUNCTIONS:
     # For Treasure Generation:
-        # call_all_air()
+        # call_all_air(gridlist,lengthy): returns a list of coordinates with '◦' inside gridlist
+        # randomselect_aircoords(gridlist,n): returns a list of n random air ('◦') coordinates
+        # def addtreasuredetectors(gridlist,lengthy,treasurecoords)
 
 
 # Treasure and Pillar Generation:
 
-def call_all_air(gridlist,lengthy):
+def call_all_air(grid_list):
     air_coords = []
+
+    gridlist = grid_list.gridlist
+    lengthy = grid_list.lengthy
+
     for i_list in range(len(gridlist)):
         for i_i_list in range(len(gridlist[i_list])):
             if gridlist[i_list][i_i_list] == '◦' and i_list <= lengthy:
                 air_coords.append([i_i_list,i_list])
     return air_coords
 
-def randomselect_aircoords(gridlist,lengthy,n):
+def randomselect_aircoords(grid_list,n):
 
-    air_coords = call_all_air(gridlist,lengthy)
+    air_coords = call_all_air(grid_list)
     random_aircoords = []
     while len(random_aircoords) < n:
         selected_coord = random.choice(air_coords)
@@ -193,8 +179,9 @@ def randomselect_aircoords(gridlist,lengthy,n):
             random_aircoords.append(selected_coord)
     return random_aircoords
 
-def addtreasuredetectors(gridlist,lengthy,treasurecoords):
-    air_list = call_all_air(gridlist,lengthy)
+def addtreasuredetectors(grid_list,treasurecoords):
+
+    air_list = call_all_air(grid_list)
     treasure_list = treasurecoords
     treasuredetectorcoords = [[],[]]
 
@@ -207,8 +194,9 @@ def addtreasuredetectors(gridlist,lengthy,treasurecoords):
     
     return treasuredetectorcoords
 
-def addportaldetectors(gridlist,lengthy,portalcoords):
-    air_list = call_all_air(gridlist,lengthy)
+def addportaldetectors(grid_list,portalcoords):
+
+    air_list = call_all_air(grid_list)
     portal_list = portalcoords
     portaldetectorcoords = [[],[],[]]
 
@@ -223,9 +211,10 @@ def addportaldetectors(gridlist,lengthy,portalcoords):
     
     return portaldetectorcoords
 
-def treasurize(gridlist,lengthy,tcl,tdl,pcl,portl,portdl):
+def treasurize(grid_list,tcl,tdl,pcl,portl,portdl):
 
-    generatedgridlist = gridlist
+    generatedgridlist = grid_list.gridlist
+
     for i in tcl:
         generatedgridlist[i[1]][i[0]] = treasure_entity
     for i in tdl[1]:
@@ -243,6 +232,7 @@ def treasurize(gridlist,lengthy,tcl,tdl,pcl,portl,portdl):
             generatedgridlist[i[1]][i[0]] = l2pd_entity
         for i in portdl[0]:
             generatedgridlist[i[1]][i[0]] = l1pd_entity
+    
     return generatedgridlist
 
 """-----------------------------------------------------------------------------------------"""
@@ -272,38 +262,38 @@ def change_charactercoords(x,y,movement_key):
 def isinsideWall(x,y,generated_grid_list):
     character_coordinates = [x,y]
     insidewallBool = False
-    for ind_list in range(len(generated_grid_list)): # -- Iterate through the list of lists
-        for ind_i in range(len(generated_grid_list[ind_list])): # -- Iterate through the characters of each list
-            if generated_grid_list[ind_list][ind_i] == '■' and [ind_i,ind_list] == character_coordinates: # -- Character position determinant
+    for ind_list in range(len(generated_grid_list.gridlist)): # -- Iterate through the list of lists
+        for ind_i in range(len(generated_grid_list.gridlist[ind_list])): # -- Iterate through the characters of each list
+            if generated_grid_list.gridlist[ind_list][ind_i] == '■' and [ind_i,ind_list] == character_coordinates: # -- Character position determinant
                 insidewallBool = True
     return insidewallBool
 
 def generate_gridwithcharacter(x,y,generated_grid_list):
     character_coordinates = [x,y]
 
-    for ind_list in range(len(generated_grid_list)): # -- Represent entire line
+    for ind_list in range(len(generated_grid_list.gridlist)): # -- Represent entire line
         gridx = ''
-        for ind_i in range(len(generated_grid_list[ind_list])): # -- Represent character of each line
+        for ind_i in range(len(generated_grid_list.gridlist[ind_list])): # -- Represent character of each line
             if [ind_i,ind_list] == character_coordinates: # -- Character position determinant
                 gridx += character.symbol
-            elif type(generated_grid_list[ind_list][ind_i]) == Entity:
-                gridx += generated_grid_list[ind_list][ind_i].symbol
+            elif type(generated_grid_list.gridlist[ind_list][ind_i]) == Entity:
+                gridx += generated_grid_list.gridlist[ind_list][ind_i].symbol
             else:
-                gridx += generated_grid_list[ind_list][ind_i]
+                gridx += generated_grid_list.gridlist[ind_list][ind_i]
         print(gridx)
 
 def generate_gridwithalternate(x,y,generated_grid_list):
     character_coordinates = [x,y]
 
-    for ind_list in range(len(generated_grid_list)): # -- Represent entire line
+    for ind_list in range(len(generated_grid_list.gridlist)): # -- Represent entire line
         gridx = ''
-        for ind_i in range(len(generated_grid_list[ind_list])): # -- Represent character of each line
+        for ind_i in range(len(generated_grid_list.gridlist[ind_list])): # -- Represent character of each line
             if [ind_i,ind_list] == character_coordinates: # -- Character position determinant
                 gridx += character.symbol
-            elif type(generated_grid_list[ind_list][ind_i]) == Entity:
-                gridx += generated_grid_list[ind_list][ind_i].alternate
+            elif type(generated_grid_list.gridlist[ind_list][ind_i]) == Entity:
+                gridx += generated_grid_list.gridlist[ind_list][ind_i].alternate
             else:
-                gridx += generated_grid_list[ind_list][ind_i]
+                gridx += generated_grid_list.gridlist[ind_list][ind_i]
         print(gridx)
 
 """-----------------------------------------------------------------------------------------"""
@@ -318,9 +308,9 @@ def isinsideInteractive(x,y,generated_grid_list,Interactive): # Checks
     character_coordinates = [x,y]
     
     insideInteractiveBool = False
-    for ind_list in range(len(generated_grid_list)): # -- Iterate through the list of lists
-        for ind_i in range(len(generated_grid_list[ind_list])): # -- Iterate through the characters of each list
-            if generated_grid_list[ind_list][ind_i] == Interactive and [ind_i,ind_list] == character_coordinates: # -- Character position determinant
+    for ind_list in range(len(generated_grid_list.gridlist)): # -- Iterate through the list of lists
+        for ind_i in range(len(generated_grid_list.gridlist[ind_list])): # -- Iterate through the characters of each list
+            if generated_grid_list.gridlist[ind_list][ind_i] == Interactive and [ind_i,ind_list] == character_coordinates: # -- Character position determinant
                 insideInteractiveBool = True
     return insideInteractiveBool
 
@@ -336,68 +326,60 @@ def isinsideInteractive(x,y,generated_grid_list,Interactive): # Checks
 # FUNCTIONS:
     # initgl(): responsible for character presence and movement control; takes character coordinates [x,y] and starts the grid loop, only ending once a condition has been met.
 
-def initgl():
-    lengthx = 55
-    lengthy = 15
+def initgl(lx=55, ly=15, nopillars=25, notreasure=5,crypthealth=750):
+    
+    generated_grid_list = Grid(lx,ly)
 
-    generated_grid_list = generate_gridlist(55,15)
+    lengthx = generated_grid_list.lengthx
+    lengthy = generated_grid_list.lengthy
 
     character_coordinates = [int(lengthx/2)+1,lengthy+4]
 
-    init_crypt_health = 1000
-    crypt_health = 1000
+    init_crypt_health = crypthealth
+    crypt_health = crypthealth
 
-    numoftreasure = 5
+    numoftreasure = notreasure
     current_treasure = 0
 
     message_line = ''
 
-    treasurecoordslist = randomselect_aircoords(generated_grid_list,lengthy,numoftreasure)
-    treasuredetectorslist = addtreasuredetectors(generated_grid_list,lengthy,treasurecoordslist)
-    pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
+    treasurecoordslist = randomselect_aircoords(generated_grid_list,numoftreasure)
+    treasuredetectorslist = addtreasuredetectors(generated_grid_list,treasurecoordslist)
+    pillarcoordslist = randomselect_aircoords(generated_grid_list,nopillars)
 
     if similaritems(treasurecoordslist,pillarcoordslist):
         while similaritems(treasurecoordslist,pillarcoordslist):
-            pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
+            pillarcoordslist = randomselect_aircoords(generated_grid_list,nopillars)
     
-    portal_coord = randomselect_aircoords(generated_grid_list,lengthy,1)
-    canportalize = False
-
+    portal_coord = randomselect_aircoords(generated_grid_list,1)
     
     if similaritems(portal_coord,pillarcoordslist):
         while similaritems(portal_coord,pillarcoordslist):
-                pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
-                if similaritems(portal_coord,pillarcoordslist):
-                    while similaritems(portal_coord,pillarcoordslist):
-                        pillarcoordslist = randomselect_aircoords(generated_grid_list,lengthy,15)
+                portal_coord = randomselect_aircoords(generated_grid_list,1)
 
     
 
-
+    canportalize = False
     winbool = False
     gameoverbool = False
 
     while True:
-        os.system('clear')
-        os.system('cls')
 
-        temp_grid_list = generate_gridlist(55,15)
+        clear()
+
+        temp_grid_list = Grid(lengthx,lengthy)
 
 
         tcl = treasurecoordslist
-        tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
+        tdcl = addtreasuredetectors(temp_grid_list,treasurecoordslist)
         pcl = pillarcoordslist
         portl = portal_coord
-        portdl = addportaldetectors(temp_grid_list,lengthy,portal_coord)
+        portdl = addportaldetectors(temp_grid_list,portal_coord)
 
         if canportalize:
-            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl,portdl)
+            treasurize(temp_grid_list,tcl,tdcl,pcl,portl,portdl)
         else:
-            treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None,None)
-        
-
-        for i in range(50):
-            print('')
+            treasurize(temp_grid_list,tcl,tdcl,pcl,None,None)
 
         generate_gridwithcharacter(character_coordinates[0],character_coordinates[1],temp_grid_list)
 
@@ -414,47 +396,24 @@ def initgl():
         new_character_coordinates = change_charactercoords(character_coordinates[0],character_coordinates[1],char_movement)
 
         # -- Place the conditions for interacting with different objects here
-        
-        if crypt_health <= 0:
-            gameoverbool = True
-            
-            temp_grid_list = generate_gridlist(55,15)
 
-
-            tcl = treasurecoordslist
-            tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
-            pcl = pillarcoordslist
-            portl = portal_coord
-            portdl = addportaldetectors(temp_grid_list,lengthy,portal_coord)
-
-            if canportalize:
-                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl,portdl)
-            else:
-                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None,None)
-        
-
-            for i in range(50):
-                print('')
-
-            generate_gridwithalternate(character_coordinates[0],character_coordinates[1],temp_grid_list)
-
-            break
-    
-        elif isinsideWall(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list): 
+        turnbackvalue = False
+        if isinsideWall(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list): 
             # -- For if the character bumps into a wall
             message_line += 'You bumped into a wall. The crypt quivers. (-2 Crypt Health)\n'
             crypt_health -= 2
             if canportalize:
                 message_line += 'Dust and debris begin to fall... (-2 Crypt Health)\n'
                 crypt_health -= 2
-            continue
+            turnbackvalue = True
+            
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,pillar_entity):
             message_line += 'You bumped into a pillar. The ceiling cracks. (-10 Crypt Health)\n'
             crypt_health -= 10
             if canportalize:
                 message_line += 'Dust and debris begin to fall... (-10 Crypt Health)\n'
                 crypt_health -= 10
-            continue
+            turnbackvalue = True
 
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,l2td_entity):
             message_line += 'You sense a treasure nearby... [Intuition 1/2]\n'
@@ -489,19 +448,19 @@ def initgl():
         elif isinsideInteractive(new_character_coordinates[0],new_character_coordinates[1],temp_grid_list,portal_entity):
             winbool = True
             
-            temp_grid_list = generate_gridlist(55,15)
+            temp_grid_list = Grid(lengthx,lengthy)
 
 
             tcl = treasurecoordslist
-            tdcl = addtreasuredetectors(temp_grid_list,lengthy,treasurecoordslist)
+            tdcl = addtreasuredetectors(temp_grid_list,treasurecoordslist)
             pcl = pillarcoordslist
             portl = portal_coord
-            portdl = addportaldetectors(temp_grid_list,lengthy,portal_coord)
+            portdl = addportaldetectors(temp_grid_list,portal_coord)
 
             if canportalize:
-                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,portl,portdl)
+                treasurize(temp_grid_list,tcl,tdcl,pcl,portl,portdl)
             else:
-                treasurize(temp_grid_list,lengthy,tcl,tdcl,pcl,None,None)
+                treasurize(temp_grid_list,tcl,tdcl,pcl,None,None)
         
 
             for i in range(50):
@@ -511,11 +470,38 @@ def initgl():
 
             break
 
-        else:
-            character_coordinates = new_character_coordinates
-        
+        if crypt_health <= 0:
+
+            gameoverbool = True
+            
+            temp_grid_list = Grid(lengthx,lengthy)
+
+
+            tcl = treasurecoordslist
+            tdcl = addtreasuredetectors(temp_grid_list,treasurecoordslist)
+            pcl = pillarcoordslist
+            portl = portal_coord
+            portdl = addportaldetectors(temp_grid_list,portal_coord)
+
+            if canportalize:
+                treasurize(temp_grid_list,tcl,tdcl,pcl,portl,portdl)
+            else:
+                treasurize(temp_grid_list,tcl,tdcl,pcl,None,None)
         
 
+            for i in range(50):
+                print('')
+
+            generate_gridwithalternate(character_coordinates[0],character_coordinates[1],temp_grid_list)
+
+            break
+
+        if turnbackvalue == True:
+            turnbackvalue = False
+            continue
+
+        character_coordinates = new_character_coordinates
+        
         crypt_health -= 1
         if canportalize:
             crypt_health -= 1
@@ -526,19 +512,32 @@ def initgl():
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
+# SETTINGS
+
+"""-----------------------------------------------------------------------------------------"""
+"""-----------------------------------------------------------------------------------------"""
+
+current_mode = 'Normal'
+
+"""-----------------------------------------------------------------------------------------"""
+"""-----------------------------------------------------------------------------------------"""
+
 # MAIN MENU AND DIALOGS
 
 """-----------------------------------------------------------------------------------------"""
 """-----------------------------------------------------------------------------------------"""
 
 dialog_list = []
+
 class Dialog:
 
-    def __init__(self,id,dialog,input,inputid):
+    def __init__(self,id,desc,dialog,input,inputid,formatform='{format}'):
         self.id = id
+        self.desc = desc
         self.dialog = dialog
         self.input = input
         self.inputid = inputid
+        self.formatform = formatform
         dialog_list.append(self)
     
     def determine_input(self):
@@ -554,10 +553,11 @@ class Dialog:
         for i in range(len(self.input)):
             if response == self.input[i]:
                 return self.inputid[i]
-        
+    
+    def update(self,format):
+        self.dialog = self.formatform.format(fm=format)
 
-
-d1 = Dialog(1, '''
+d1 = Dialog(1,  'Main Menu', '''
 
     _______  _______  _______  _                 ______   _______  ______                             
     (  ___  )(  ____ \(  ____ \( \      |\     /|(  __  \ (  ____ \(  __  \                            
@@ -579,15 +579,41 @@ d1 = Dialog(1, '''
 
     by Koriyu
 
-[Play]
-[How to Play] 
+[Play] Difficulty: Normal
+[How to Play]
+[Settings]
 [Exit]            
 
-> ''', ['Play','How to Play','Exit'], [2,3,4])
+> ''', ['Play','How to Play','Settings','Exit'], [2,3,10,4], '''
 
-d2000 = Dialog(2000,'[Yes] [Back to Main Menu]', ['Yes','Back to Main Menu'], [2,1])
+    _______  _______  _______  _                 ______   _______  ______                             
+    (  ___  )(  ____ \(  ____ \( \      |\     /|(  __  \ (  ____ \(  __  \                            
+    | (   ) || (    \/| (    \/| (      | )   ( || (  \  )| (    \/| (  \  )                           
+    | |   | || |      | |      | |      | |   | || |   ) || (__    | |   ) |                           
+    | |   | || |      | |      | |      | |   | || |   | ||  __)   | |   | |                           
+    | |   | || |      | |      | |      | |   | || |   ) || (      | |   ) |                           
+    | (___) || (____/\| (____/\| (____/\| (___) || (__/  )| (____/\| (__/  )                           
+    (_______)(_______/(_______/(_______/(_______)(______/ (_______/(______/                            
+                                                                                                    
+                    _______  _______  _______  _______  _______ _________ _______          _________
+                    (  ____ \(  ___  )(  ____ )(  ____ \(  ____ \\__   __/(  ____ \|\     /|\__   __/
+                    | (    \/| (   ) || (    )|| (    \/| (    \/   ) (   | (    \/| )   ( |   ) (   
+                    | (__    | |   | || (____)|| (__    | (_____    | |   | |      | (___) |   | |   
+                    |  __)   | |   | ||     __)|  __)   (_____  )   | |   | | ____ |  ___  |   | |   
+                    | (      | |   | || (\ (   | (            ) |   | |   | | \_  )| (   ) |   | |   
+                    | )      | (___) || ) \ \__| (____/\/\____) |___) (___| (___) || )   ( |   | |   
+                    |/       (_______)|/   \__/(_______/\_______)\_______/(_______)|/     \|   )_(   
 
-d3 = Dialog(3,'''
+    by Koriyu
+
+[Play] Difficulty: {fm}
+[How to Play]
+[Settings]
+[Exit]            
+
+> ''')
+
+d3 = Dialog(3, 'How to Play 1', '''
 
     [1/6]
 
@@ -611,7 +637,7 @@ d3 = Dialog(3,'''
 
 > ''', ['Next', 'Main Menu'], [5,1])
 
-d4 = Dialog(4,'''
+d4 = Dialog(4, 'Exit Game', '''
 
 Do you want to exit the game?
 
@@ -620,7 +646,7 @@ Do you want to exit the game?
 
 > ''', ['Yes','No'], [0,1])
 
-d5 = Dialog(5,'''
+d5 = Dialog(5, 'How to Play 2', '''
 
     [2/6]
 
@@ -669,7 +695,7 @@ d5 = Dialog(5,'''
 
 > ''', ['Previous', 'Next', 'Main Menu'], [3,6,1])
 
-d6 = Dialog(6,'''
+d6 = Dialog(6, 'How to Play 3', '''
 
     [3/6]
             
@@ -704,7 +730,7 @@ d6 = Dialog(6,'''
 
 > ''', ['Previous', 'Next', 'Main Menu'], [5,7,1])
 
-d7 = Dialog(7,'''
+d7 = Dialog(7,  'How to Play 4', '''
 
     [4/6]
     
@@ -753,7 +779,7 @@ d7 = Dialog(7,'''
 
 > ''', ['Previous', 'Next', 'Main Menu'], [6,8,1])
 
-d8 = Dialog(8,'''
+d8 = Dialog(8, 'How to Play 5', '''
 
     [5/6]
     
@@ -806,7 +832,7 @@ d8 = Dialog(8,'''
 
 > ''', ['Previous', 'Next', 'Main Menu'], [7,9,1])
 
-d9 = Dialog(9,'''
+d9 = Dialog(9, 'How to Play 6', '''
 
     [6/6]
     
@@ -844,21 +870,200 @@ d9 = Dialog(9,'''
 
 > ''', ['Previous', 'Main Menu'], [8,1])
 
+d10 = Dialog(10, 'Settings', '''
+
+    SETTINGS:
+                
+    [Set Difficulty]
+    Current difficulty: Normal
+
+    [Main Menu]
+    
+> ''', ['Set Difficulty', 'Main Menu'], [11,1], '''
+
+    SETTINGS:
+                
+    [Set Difficulty]
+    Current difficulty: {fm}
+
+    [Main Menu]
+    
+> ''')
+
+d11 = Dialog(11, 'Settings', '''
+
+    SETTINGS:
+                
+    Set difficulty to:
+    
+    [Baby] [Easy] [Normal] [Hard] [Impossible]
+        
+    Your current difficulty: Normal
+    Default difficulty: Normal
+    
+    [Main Menu]
+    
+> ''', ['Baby', 'Easy', 'Normal', 'Hard', 'Impossible' , 'Main Menu'], [12,13,14,15,16,1], '''
+
+    SETTINGS:
+                
+    Set difficulty to:
+    
+    [Baby] [Easy] [Normal] [Hard] [Impossible]
+        
+    Your current difficulty: {fm}
+    Default difficulty: Normal
+    
+    [Main Menu]
+    
+> ''')
+
+d12 = Dialog(12, 'Settings', '''
+
+    SETTINGS:
+                
+    Would you like to set difficulty to [Baby]?
+    
+    [Yes] [No]
+    
+> ''', ['Yes', 'No'], [17, 11])
+
+d13 = Dialog(13, 'Settings', '''
+
+    SETTINGS:
+                
+    Would you like to set difficulty to [Easy]?
+    
+    [Yes] [No]
+    
+> ''', ['Yes', 'No'], [18, 11])
+
+d14 = Dialog(14, 'Settings', '''
+
+    SETTINGS:
+                
+    Would you like to set difficulty to [Normal]?
+    
+    [Yes] [No]
+    
+> ''', ['Yes', 'No'], [19, 11])
+
+d15 = Dialog(15, 'Settings', '''
+
+    SETTINGS:
+                
+    Would you like to set difficulty to [Hard]?
+    
+    [Yes] [No]
+    
+> ''', ['Yes', 'No'], [20, 11])
+
+d16 = Dialog(16, 'Settings', '''
+
+    SETTINGS:
+                
+    Would you like to set difficulty to [Impossible]?
+    
+    [Yes] [No]
+    
+> ''', ['Yes', 'No'], [21, 11])
+
+d2000 = Dialog(2000, 'You win/You lost', '[Yes] [Back to Main Menu]', ['Yes','Back to Main Menu'], [2,1])
+
+
+
+
 
 dialogvalue = 1
+
 while dialogvalue != 0:
-    
+
+    clear()
+        
     for i in dialog_list:
         if dialogvalue == i.id:
             dialogvalue = i.determine_input()
-            os.system('clear')
-            os.system('cls')
-        elif dialogvalue == 2:
-            gat = initgl()
-            if gat[0]:
-                print('You win! Try again?')
-            elif gat[1]:
-                print('You lost. Try again?')
-            dialogvalue = d2000.determine_input()
+            break
+    
+    if dialogvalue == 2:
 
-        
+        if current_mode == 'Baby':
+            gat = initgl(15, 7, 0, 1, 100000)
+
+        elif current_mode == 'Easy':
+            gat = initgl(35, 15, 5, 3, 1500)
+
+        elif current_mode == 'Normal':
+            gat = initgl()
+
+        elif current_mode == 'Hard':
+            gat = initgl(105, 15, 75, 7, 750)
+
+        elif current_mode == 'Impossible':
+            gat = initgl(155, 19, 150, 10, 500)
+
+        if gat[0]:
+            print('You watch the entire crypt crumble before your eyes as you fall through the portal. [WIN]')
+            print('Would you like to move forth to another dungeon or call it a day?')
+        elif gat[1]:
+            print('The crypt shakes, its entire integrity into shambles. The ceiling crushes you in an instant. [GAME OVER]')
+            print('Would you like to try again?')
+        dialogvalue = d2000.determine_input()
+        continue
+            
+    elif dialogvalue == 17:
+        current_mode = 'Baby'
+        d1.update('Baby')
+        d10.update('Baby')
+        d11.update('Baby')
+        dialogvalue = 1
+        continue
+
+    elif dialogvalue == 18:
+        current_mode = 'Easy'
+        d1.update('Easy')
+        d10.update('Easy')
+        d11.update('Easy')
+        dialogvalue = 1
+        continue
+
+    elif dialogvalue == 19:
+        current_mode = 'Normal'
+        d1.update('Normal')
+        d10.update('Normal')
+        d11.update('Normal')
+        dialogvalue = 1
+        continue
+
+    elif dialogvalue == 20:
+        current_mode = 'Hard'
+        d1.update('Hard')
+        d10.update('Hard')
+        d11.update('Hard')
+        dialogvalue = 1
+        continue
+
+    elif dialogvalue == 21:
+        current_mode = 'Impossible'
+        d1.update('Impossible')
+        d10.update('Impossible')
+        d11.update('Impossible')
+        dialogvalue = 1
+        continue
+
+# For Testing
+
+'''for i in dialog_list:
+    print(str(i.id) + ': ' + i.desc)''' # -- For viewing all dialogs (Turn off activate())
+
+'''pillar_entity = Entity('Pillar', '▥', '▥')
+treasure_entity = Entity('Treasure', '❉', '❉')
+portal_entity = Entity('Portal', '♨', '♨')
+# The lower the level the closer it is to the treasure
+l1td_entity = Entity('Level 1 Treasure Detector', 'x', 'x')
+l2td_entity = Entity('Level 2 Treasure Detector', 'X', 'X')
+# The lower the level the closer it is to the portal
+l1pd_entity = Entity('Level 1 Portal Detector', '.', '.')
+l2pd_entity = Entity('Level 2 Portal Detector', 'o', 'o')
+l3pd_entity = Entity('Level 3 Portal Detector', '0', '0')''' # -- For viewing entity generation (Replace lines 47-56)
+
