@@ -281,6 +281,7 @@ def treasurize(grid_list,tcl,tdl,pcl,portl,portdl):
     # isinsideWall(x,y): Takes character coordinates (x,y) and checks if the coordinate has similar coordinates as one of the walls of the grid. Returns true if so.
     # generate_gridwithcharacter(x,y,generated_grid_list): takes character coordinates (x,y) and places the character to the grid at its respective coordinate.
     # generate_gridwithalternate(x,y,generated_grid_list): works similarly as the former, however Interactives (Entities) become visible
+    # isinsideInteractive(x,y,generated_grid_list_, Interactive): Checks if the current character's position [x,y] in [generated_grid_list] is inside the [Interactive]
 
 def change_charactercoords(x,y,movement_key):
     character_coordinates = [x,y]
@@ -330,17 +331,6 @@ def generate_gridwithalternate(x,y,generated_grid_list):
             else:
                 gridx += generated_grid_list.gridlist[ind_list][ind_i]
         print(gridx)
-
-"""-----------------------------------------------------------------------------------------"""
-"""-----------------------------------------------------------------------------------------"""
-
-# OBSTACLES AND TREASURE: INTERACTIONS WITH PLAYER AND ENVIRONMENT
-
-"""-----------------------------------------------------------------------------------------"""
-"""-----------------------------------------------------------------------------------------"""
-
-# FUNCTIONS:
-    # isinsideInteractive(x,y,generated_grid_list_, Interactive): Checks if the current character's position [x,y] in [generated_grid_list] is inside the [Interactive]
 
 def isinsideInteractive(x,y,generated_grid_list,Interactive): # Checks 
     character_coordinates = [x,y]
